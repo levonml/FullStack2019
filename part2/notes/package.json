@@ -1,9 +1,9 @@
 {
-  "name": "phonebook",
+  "name": "notes",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@testing-library/jest-dom": "^5.11.8",
+    "@testing-library/jest-dom": "^5.11.9",
     "@testing-library/react": "^11.2.3",
     "@testing-library/user-event": "^12.6.0",
     "axios": "^0.21.1",
@@ -17,7 +17,7 @@
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
-    "server": "json-server -p3004 --watch db.json"
+    "server": "json-server -p3001 --watch db.json"
   },
   "eslintConfig": {
     "extends": [
