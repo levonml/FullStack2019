@@ -3,6 +3,8 @@ import Filter from './components/Filter'
 import PersonForm from './components/PersonForm'
 import Persons from './components/Persons'
 import dataServices from './services/data'
+import Notification from './components/Notifications'
+import Error from './components/Errors'
 
 const App = () => {
     const [ persons, setPersons ] = useState([]) 
@@ -10,6 +12,8 @@ const App = () => {
     const [ newName, setNewName ] = useState('')
     const [ newNumber, setNewNumber ] = useState('')
     const [newFilter, setNewFilter] = useState('')
+    const [newNotification, setNotification] = useState(null)
+    const [newError, setError] = useState(null)
     useEffect(() =>{
         console.log('dataServices =', dataServices.getAll());
         dataServices
@@ -24,26 +28,42 @@ const App = () => {
             name: newName,
             number: newNumber,
         }
-        var confirm
-        console.log("id = ",persons.id);
-        persons.every((currentValue) => currentValue.name !== newName)
-        ? 
+        
+        const numberChange = (persons.every((currentValue) => (currentValue.number !== newNumber)))
+        const nameChange = persons.every((currentValue) => currentValue.name !== newName)
+        console.log("numberchange -", numberChange)
+        if (nameChange){
             dataServices
             .create(newObj) 
             .then(returned_note => {
-                console.log("returned_id = ", returned_note.id);
                 setPersons(persons.concat(returned_note))
+                setNotification(`Added ${newName}`)
+                setTimeout(() => setNotification(null), 3000)
             })
-        :    confirm = window.confirm( `${newName} is already added to phonebook, replace the old number with the new one?`)
-                if(confirm)
-                {
-                    const existingName = persons.find(p => p.name === newName)
-                    console.log("existingName.id", existingName.id );
-                    const updated = {...existingName, number: newObj.number}
-                    dataServices
-                    .update(existingName.id, updated )
-                    .then(updated_note => (setPersons(persons.map(m => m.id === existingName.id ? updated_note : m))))
-                }
+        }
+        else if (numberChange && !nameChange){
+            if(window.confirm( ` ${newName} is already added to phonebook, replace the old number with the new one?`))
+            {
+                const existingName = persons.find(p => p.name === newName)
+                const updated = {...existingName, number: newObj.number}
+                dataServices
+                .update(existingName.id, updated )
+                .then(updated_note => {
+                    (setPersons(persons.map(m => m.id === existingName.id ? updated_note : m)))
+                    setNotification(` ${newName}'s number has changed`)
+                    setTimeout(() => setNotification(null), 3000)
+                })  
+                .catch(error => {
+                    setError(`${newName} has been deleted from the server`)
+                    setTimeout(() => setError(null), 3000) 
+                    setPersons(persons.filter(p => p.id !== existingName.id))  
+                })
+            }
+        }
+        else{
+        setNotification(` ${newName} is already added to phonebook` )
+        setTimeout(() => setNotification(null), 3000)
+        }
         setNewName('')
         setNewNumber('')
     }
@@ -66,21 +86,24 @@ const App = () => {
         event.preventDefault()
         const i = Number(event.target.id)
         const pName = persons.find(p => p.id === i).name
-        console.log("i = ",i);
-        console.log("element = ",event.target.id);
         if (window.confirm(`delete ${pName}?`)){
             dataServices
             .remove(i)
-            const modified = persons.filter(per => {
-                console.log("index_2 =",typeof(i));
-                console.log("per.id =", typeof(per.id));
-                return per.id !== i})
-                setPersons(modified)
+            .catch(error => {
+                setError(`${pName} has been deleted from the server`)
+                setTimeout(() => setError(null), 3000)
+            })
+            const modified = persons.filter(per => per.id !== i)
+            setPersons(modified)
+            setNotification(`${pName} is deleted succesfully`)
+                    setTimeout(() => setNotification(null), 3000) 
         }      
     }
   return (
     <div>
       <h2>Phonebook</h2>
+      <Error message = {newError}/>
+      <Notification message = {newNotification}/>
       <Filter 
       newFilter = {newFilter} 
       handleFilterChange = {handleFilterChange}
